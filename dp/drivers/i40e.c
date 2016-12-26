@@ -327,9 +327,10 @@ static int reta_update(struct ix_rte_eth_dev *dev, struct rte_eth_rss_reta *reta
 
 	/* first convert reta_conf to dpdk format*/
 	for (i = 0; i < dev->data->nb_rx_fgs / 64; i++) {
-		r_reta_conf[i].mask = reta_conf->mask[BITMAP_POS_IDX(i * 64)] & 0xFFFFFFFF;
-		r_reta_conf[i].mask = (reta_conf->mask[BITMAP_POS_IDX(i * 64 + 32)]
-				>> BITMAP_POS_SHIFT(32)) & 0xFFFFFFFF;
+		r_reta_conf[i].mask = reta_conf->mask[BITMAP_POS_IDX(i * 64)] >> BITMAP_POS_SHIFT(i * 64);
+		/* If a long is only 32 bits, need to copy the next element of the bitmap for the high 32 bits */
+		if (BITS_PER_LONG < 64)
+			r_reta_conf[i].mask |= (reta_conf->mask[BITMAP_POS_IDX(i * 64 + 32)] & ((1ULL << 32) - 1)) << 32;
 	}
 
 	for (i = 0; i < dev->data->nb_rx_fgs / 64; ++i)
