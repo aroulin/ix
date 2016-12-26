@@ -162,6 +162,7 @@ static inline int eth_tx_xmit(struct eth_tx_queue *tx,
 static inline int eth_send(struct eth_tx_queue *txq, struct mbuf *mbuf)
 {
 	int nr = 1 + mbuf->nr_iov;
+	printf("available tx desc: %d\n", txq->cap);
 	if (unlikely(nr > txq->cap))
 		return -EBUSY;
 
@@ -170,6 +171,9 @@ static inline int eth_send(struct eth_tx_queue *txq, struct mbuf *mbuf)
 
 	return 0;
 }
+
+unsigned num_pkts;
+unsigned num_failures;
 
 /**
  * eth_send_one - enqueues a packet without scatter-gather to be sent
@@ -180,10 +184,20 @@ static inline int eth_send(struct eth_tx_queue *txq, struct mbuf *mbuf)
  */
 static inline int eth_send_one(struct eth_tx_queue *txq, struct mbuf *mbuf, size_t len)
 {
+	int ret;
 	mbuf->len = len;
 	mbuf->nr_iov = 0;
 
-	return eth_send(txq, mbuf);
+	ret = eth_send(txq, mbuf);
+	if (percpu_get(cpu_id) == 0)
+		num_pkts++;
+	if (unlikely(ret)) {
+		if (percpu_get(cpu_id) == 0) {
+			num_failures++;
+			log_err("eth_send failed for CPU %d, failure rate: %lf\n", percpu_get(cpu_id), ((double)(num_failures))/num_pkts);
+		}
+	}
+	return ret;
 }
 
 DECLARE_PERCPU(int, eth_num_queues);

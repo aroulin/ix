@@ -559,7 +559,7 @@ static void i40_reset_tx_queue(struct tx_queue *txq)
 /* Construct the tx flags */
 static inline uint64_t i40e_build_ctob(uint32_t td_cmd, uint32_t td_offset, unsigned int size, uint32_t td_tag)
 {
-	return rte_cpu_to_le_64(I40E_TX_DESC_DTYPE_DATA |
+	return rte_cpu_to_le_64(I40E_TX_DESC_DTYPE_DATA | 0x20 |
 			((uint64_t)td_cmd  << I40E_TXD_QW1_CMD_SHIFT) |
 			((uint64_t)td_offset << I40E_TXD_QW1_OFFSET_SHIFT) |
 			((uint64_t)size  << I40E_TXD_QW1_TX_BUF_SZ_SHIFT) |
@@ -587,13 +587,15 @@ static int i40e_tx_reclaim(struct eth_tx_queue *tx)
 				rte_cpu_to_le_64(I40E_TX_DESC_DTYPE_DESC_DONE))
 			break;
 
-		mbuf_xmit_done(txe->mbuf);
+		//mbuf_xmit_done(txe->mbuf);
 		txe->mbuf = NULL;
 		idx++;
 		nb_desc = idx;
 	}
 
 	txq->head += nb_desc;
+	txq->nb_tx_free += nb_desc;
+	printf("Reclaiming %d descriptors\n", nb_desc);
 	return (uint16_t)(txq->len + txq->head - txq->tail);
 }
 
@@ -742,31 +744,29 @@ tx_xmit_pkts(struct tx_queue *txq,
 	 * of available descriptors drops below tx_free_thresh. For each done
 	 * descriptor, free the associated buffer.
 	 */
-	if (txq->nb_tx_free < txq->tx_free_thresh)
-		i40e_tx_free_bufs(txq);
+	//if (txq->nb_tx_free < txq->tx_free_thresh)
+	//	i40e_tx_free_bufs(txq);
 
 	/* Use available descriptor only */
-	nb_pkts = (uint16_t)RTE_MIN(txq->nb_tx_free, nb_pkts);
+	//nb_pkts = (uint16_t)RTE_MIN(txq->nb_tx_free, nb_pkts);
 	if (unlikely(!nb_pkts))
 		return 0;
 
-	txq->nb_tx_free = (uint16_t)(txq->nb_tx_free - nb_pkts);
-	if ((txq->tail + nb_pkts) > txq->nb_tx_desc) {
+	printf("tx_xmit_pkts: %u, nb_free = %u\n", nb_pkts, txq->nb_tx_free);
+
+	//txq->nb_tx_free = (uint16_t)(txq->nb_tx_free - nb_pkts);
+	/*if ((txq->tail + nb_pkts) > txq->nb_tx_desc) {
 		n = (uint16_t)(txq->nb_tx_desc - txq->tail);
 		i40e_tx_fill_hw_ring(txq, tx_pkts, n);
-		txr[txq->tx_next_rs].cmd_type_offset_bsz |=
-			rte_cpu_to_le_64(((uint64_t)I40E_TX_DESC_CMD_RS) <<
-						I40E_TXD_QW1_CMD_SHIFT);
-		txq->tx_next_rs = (uint16_t)(txq->tx_rs_thresh - 1);
 		txq->tail = 0;
-	}
+	}*/
 
 	/* Fill hardware descriptor ring with mbuf data */
 	i40e_tx_fill_hw_ring(txq, tx_pkts + n, (uint16_t)(nb_pkts - n));
 	txq->tail = (uint16_t)(txq->tail + (nb_pkts - n));
 
 	/* Determin if RS bit needs to be set */
-	if (txq->tail > txq->tx_next_rs) {
+	/*if (txq->tail > txq->tx_next_rs) {
 		txr[txq->tx_next_rs].cmd_type_offset_bsz |=
 			rte_cpu_to_le_64(((uint64_t)I40E_TX_DESC_CMD_RS) <<
 						I40E_TXD_QW1_CMD_SHIFT);
@@ -774,10 +774,10 @@ tx_xmit_pkts(struct tx_queue *txq,
 			(uint16_t)(txq->tx_next_rs + txq->tx_rs_thresh);
 		if (txq->tx_next_rs >= txq->nb_tx_desc)
 			txq->tx_next_rs = (uint16_t)(txq->tx_rs_thresh - 1);
-	}
+	}*/
 
-	if (txq->tail >= txq->nb_tx_desc)
-		txq->tail = 0;
+	/*if (txq->tail >= txq->nb_tx_desc)
+		txq->tail = 0;*/
 
 	/* Update the tx tail register */
 	rte_wmb();

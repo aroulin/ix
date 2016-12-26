@@ -497,6 +497,7 @@ static int ixgbe_tx_reclaim(struct eth_tx_queue *tx)
 	}
 
 	txq->head += nb_desc;
+	printf("Reclaiming %d descriptors\n", nb_desc);
 	return (uint16_t)(txq->len + txq->head - txq->tail);
 }
 
@@ -569,6 +570,7 @@ static int ixgbe_tx_xmit_one(struct tx_queue *txq, struct mbuf *mbuf)
 	 * NOTE: This should work correctly even with overflow...
 	 */
 	if (unlikely((uint16_t)(txq->tail + nr_iov + 1 - txq->head) >= txq->len)) {
+		printf("RECLAIMING URGENT\n");
 		ixgbe_tx_reclaim(&txq->etxq);
 		if ((uint16_t)(txq->tail + nr_iov + 1 - txq->head) >= txq->len)
 			return -EAGAIN;
