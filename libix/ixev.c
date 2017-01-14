@@ -168,13 +168,14 @@ static void ixev_tcp_recv(hid_t handle, unsigned long cookie,
 static void ixev_tcp_sent(hid_t handle, unsigned long cookie, size_t len)
 {
 	struct ixev_ctx *ctx = (struct ixev_ctx *) cookie;
-	struct ixev_ref *ref = ctx->ref_head;
+	struct ixev_ref *ref = ctx->ref_head, *next;
 
 	ctx->sent_total += len;
 
 	while (ref && ref->send_pos <= ctx->sent_total) {
+		next = ref->next;
 		ref->cb(ref);
-		ref = ref->next;
+		ref = next;
 	}
 
 	ctx->ref_head = ref;
@@ -516,7 +517,7 @@ static void ixev_handle_sendv_ret(struct ixev_ctx *ctx, long ret)
 
 static void ixev_handle_close_ret(struct ixev_ctx *ctx, long ret)
 {
-	struct ixev_ref *ref = ctx->ref_head;
+	struct ixev_ref *ref = ctx->ref_head, *next;
 
 	if (unlikely(ret < 0)) {
 		printf("ixev: failed to close handle, ret = %ld\n", ret);
@@ -524,8 +525,9 @@ static void ixev_handle_close_ret(struct ixev_ctx *ctx, long ret)
 	}
 
 	while (ref) {
+		next = ref->next;
 		ref->cb(ref);
-		ref = ref->next;
+		ref = next;
 	}
 
 	ixev_global_ops.release(ctx);

@@ -113,6 +113,8 @@ extern void eth_fg_unregister_listener(struct eth_fg_listener *l);
  */
 static inline void eth_fg_set_current(struct eth_fg *fg)
 {
+	if (fg->cur_cpu != percpu_get(cpu_id))
+		printf("%d - %d\n", fg->cur_cpu, percpu_get(cpu_id));
 	assert(fg->cur_cpu == percpu_get(cpu_id));
 //	percpu_get(the_cur_fg) = fg;
 }

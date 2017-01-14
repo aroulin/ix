@@ -224,11 +224,6 @@ static int dev_start(struct ix_rte_eth_dev *dev)
 		rx_ctx.showiv = 0;
 		rx_ctx.prefena = 1;
 
-		ret = i40e_alloc_rx_mbufs(rxq);
-		if (ret) {
-			log_err("failed to allocate RX mbuffs.\n");
-			return ret;
-		}
 		/* write to our own buffs*/
 		rx_ctx.base = rxq->ring_physaddr / I40E_QUEUE_BASE_ADDR_UNIT;
 		rx_ctx.qlen = rxq->len;
@@ -515,6 +510,12 @@ static int rx_queue_setup(struct ix_rte_eth_dev *dev, int queue_idx, int numa_no
 	dev->data->rx_queues[queue_idx] = &rxq->erxq;
 	/* release the dpdk memory location and all its buffers*/
 	//i40e_dev_rx_queue_release(drxq);
+
+	ret = i40e_alloc_rx_mbufs(rxq);
+	if (ret) {
+		log_err("failed to allocate RX mbuffs.\n");
+		return ret;
+	}
 	return 0;
 
 err:
