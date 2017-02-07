@@ -283,7 +283,6 @@ static int dev_start(struct ix_rte_eth_dev *dev)
 		#ifdef RTE_LIBRTE_IEEE1588
 			tx_ctx.timesync_ena = 1;
 		#endif
-		tx_ctx.fd_ena = TRUE;
 		tx_ctx.base = txq->ring_physaddr / I40E_QUEUE_BASE_ADDR_UNIT;
 		tx_ctx.qlen = txq->len;
 
