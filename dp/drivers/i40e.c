@@ -613,6 +613,8 @@ static int i40e_tx_xmit_one(struct tx_queue *txq, struct mbuf *mbuf)
 	txdp->buffer_addr = rte_cpu_to_le_64(maddr);
 	txdp->cmd_type_offset_bsz = i40e_build_ctob((uint32_t)td_cmd, td_offset, mbuf->len, 0);
 
+	log_debug("Tx pkt at desc %d, desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail) & (txq->len - 1), txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
+
 	txq->tail++;
 
 	return 0;
