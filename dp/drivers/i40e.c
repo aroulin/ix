@@ -270,6 +270,11 @@ static int dev_start(struct ix_rte_eth_dev *dev)
 		pf_q = dtxq->reg_idx;
 		hw = I40E_VSI_TO_HW(dtxq->vsi);
 
+		printf("IX TX queue at %p\n", txq->ring_physaddr);
+		printf("DPDK TX queue at %p\n", dtxq->tx_ring_phys_addr);
+		txq->ring_physaddr = dtxq->tx_ring_phys_addr;
+		txq->ring = dtxq->tx_ring;
+
 
 		ret = i40e_switch_tx_queue(hw, pf_q, FALSE);
 		if (ret < 0) {
@@ -611,12 +616,12 @@ static int i40e_tx_xmit_one(struct tx_queue *txq, struct mbuf *mbuf)
 	txdp->buffer_addr = rte_cpu_to_le_64(maddr);
 	txdp->cmd_type_offset_bsz = i40e_build_ctob((uint32_t)td_cmd, td_offset, mbuf->len, 0);
 
-	log_debug("Tx pkt at desc %d, desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail) & (txq->len - 1), txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
+	log_debug("Tx pkt at desc %d (%p), desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail) & (txq->len - 1), txq->ring_physaddr, txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
 	for(int i = 1; i < 11; i++) {
 		if (txq->tail < i)
 			break;
 		txdp = &(((volatile struct i40e_tx_desc *)txq->ring)[(txq->tail - i) & (txq->len - 1)]);
-		log_debug("Desc %d, desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail - i) & (txq->len - 1), txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
+		log_debug("Desc %d (%p), desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail - i) & (txq->len - 1), txq->ring_physaddr, txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
 	}
 
 	txq->tail++;
