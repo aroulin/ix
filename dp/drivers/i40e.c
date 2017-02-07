@@ -272,8 +272,6 @@ static int dev_start(struct ix_rte_eth_dev *dev)
 
 		printf("IX TX queue at %p\n", txq->ring_physaddr);
 		printf("DPDK TX queue at %p\n", dtxq->tx_ring_phys_addr);
-		txq->ring_physaddr = dtxq->tx_ring_phys_addr;
-		txq->ring = dtxq->tx_ring;
 
 
 		ret = i40e_switch_tx_queue(hw, pf_q, FALSE);
