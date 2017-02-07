@@ -585,7 +585,7 @@ static int i40e_tx_xmit_one(struct tx_queue *txq, struct mbuf *mbuf)
 	machaddr_t maddr;
 
 	/* Always enable CRC offload insertion */
-	uint32_t td_cmd = I40E_TD_CMD | I40E_TX_DESC_CMD_RS | I40E_TX_DESC_CMD_ICRC;
+	uint32_t td_cmd = I40E_TX_DESC_CMD_RS | I40E_TX_DESC_CMD_EOP;
 	uint32_t td_offset = 0;
 	uint64_t ol_flags = mbuf->ol_flags;
 	union i40e_tx_offload tx_offload;
