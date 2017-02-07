@@ -614,6 +614,12 @@ static int i40e_tx_xmit_one(struct tx_queue *txq, struct mbuf *mbuf)
 	txdp->cmd_type_offset_bsz = i40e_build_ctob((uint32_t)td_cmd, td_offset, mbuf->len, 0);
 
 	log_debug("Tx pkt at desc %d, desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail) & (txq->len - 1), txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
+	for(int i = 1; i < 11; i++) {
+		if (txq->tail < i)
+			break;
+		txdp = &(((volatile struct i40e_tx_desc *)txq->ring)[(txq->tail - i) & (txq->len - 1)]);
+		log_debug("Desc %d, desc value = 0x%llx 0x%llx, mbuf at 0x%p\n", (txq->tail - i) & (txq->len - 1), txdp->buffer_addr, txdp->cmd_type_offset_bsz, mbuf);
+	}
 
 	txq->tail++;
 
